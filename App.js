@@ -4,7 +4,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { app, storage } from './firebaseConfig';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import Geolocation from 'react-native-geolocation-service';
 import * as Location from 'expo-location';
 
 export default function App() {
@@ -73,7 +72,7 @@ export default function App() {
 			timestamp: new Date(),
 		  });
 		  console.log('Dokumen berhasil ditambahkan dengan ID: ', docRef.id);
-		  alert('URL Gambar dengan lokasi berhasil disimpan!');
+		  alert(`URL Gambar dengan Latitude: ${location.latitude} Longitude: ${location.longitude} berhasil disimpan`);
 		} catch (error) {
 		  console.log("2");
 		  console.error('Error menambahkan dokumen: ', error);
@@ -81,20 +80,40 @@ export default function App() {
 		}
 	  };
 
-    
+    const simpanGambarGagal = async () => {
+		console.log("simpan Gambar called");
+		try {
+		  console.log("1");
+		  const docRef = await addDoc(gambarCollection, {
+			url_image: gagal,
+      latitude: location.latitude,
+      longitude: location.longitude,
+			timestamp: new Date(),
+		  });
+		  console.log('Dokumen berhasil ditambahkan dengan ID: ', docRef.id);
+		  alert('URL Gambar dengan Latitude: ${location.latitude} Longitude: ${location.longitude} berhasil disimpan');
+		} catch (error) {
+		  console.log("2");
+		  console.error('Error menambahkan dokumen: ', error);
+		  alert('Gagal menyimpan gambar.');
+		}
+	  };
 
     const [location, setLocation] = useState(null);
 
-  const getLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Izin lokasi tidak diberikan');
-      return;
-    }
+  useEffect(() => {
+    const getLocation = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Izin lokasi tidak diberikan');
+        return;
+      }
 
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location.coords);
-  };
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation.coords);
+    };
+    getLocation();
+  }, []);
 
 
   return (
@@ -103,8 +122,9 @@ export default function App() {
       <Button title="Open Gallery" onPress={openGallery} />
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <Button title="Create File" onPress={createFile} />
-      <Button title="Simpan Gambar" onPress={simpanGambar} />
+      <Button title="Simpan Gambar Berhasil" onPress={simpanGambar} />
       <Text>Maaf gabisa simpan gambar cuma bisa simpan URL gambar karena butuh firebase storage perlu bayar pake duit T_T</Text>
+      <Button title="Simpan Gambar Gagal" onPress={simpanGambarGagal} />
     </View>
   );
 }
