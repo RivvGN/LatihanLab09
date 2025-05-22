@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Button, Image, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect, Dimensions } from 'react';
+import { View, Button, Image, StyleSheet, Alert, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
+import { app, storage } from './firebaseConfig';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import Geolocation from 'react-native-geolocation-service';
+import * as Location from 'expo-location';
 
 export default function App() {
   const [image, setImage] = useState(null);
@@ -54,12 +58,53 @@ export default function App() {
     }
   };
 
+
+  const db = getFirestore(app);
+	const gambarCollection = collection(db, 'Week11');
+
+   const simpanGambar = async () => {
+		console.log("simpan Gambar called");
+		try {
+		  console.log("1");
+		  const docRef = await addDoc(gambarCollection, {
+			url_image: image,
+      latitude: location.latitude,
+      longitude: location.longitude,
+			timestamp: new Date(),
+		  });
+		  console.log('Dokumen berhasil ditambahkan dengan ID: ', docRef.id);
+		  alert('URL Gambar dengan lokasi berhasil disimpan!');
+		} catch (error) {
+		  console.log("2");
+		  console.error('Error menambahkan dokumen: ', error);
+		  alert('Gagal menyimpan gambar.');
+		}
+	  };
+
+    
+
+    const [location, setLocation] = useState(null);
+
+  const getLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Izin lokasi tidak diberikan');
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    setLocation(location.coords);
+  };
+
+
   return (
     <View style={styles.container}>
       <Button title="Open Camera" onPress={openCamera} />
       <Button title="Open Gallery" onPress={openGallery} />
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <Button title="Create File" onPress={createFile} />
+      <Button title="Simpan Gambar" onPress={simpanGambar} />
+      <Text>Maaf gabisa simpan gambar cuma bisa simpan URL gambar karena butuh firebase storage perlu bayar pake duit T_T</Text>
     </View>
   );
 }
